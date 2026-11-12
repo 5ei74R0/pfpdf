@@ -101,3 +101,18 @@ SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
 - `--keep-work-dir` keeps the temporary working directory, letting you inspect the generated `document.html` / CSS, the resource manifest, and renderer diagnostics on whether the document is ready for rendering and on page errors
 
 If the pinned renderer does not provide browser console events, the full console output is not recorded. Once conversion ends and the server stops, resources are no longer accessible through their logical URLs, so opening the HTML directly may not render identically. The working directory containing diagnostics may retain secrets derived from your input, so delete it after inspection.
+
+
+## 7.8 Standalone HTML output
+
+An output path ending in `.html` or `.htm` generates a single HTML file that opens directly in a browser, without starting the PDF renderer or Chromium.
+
+```bash
+pfpdf --input report.md --output report.html --template compact
+```
+
+The shared document pipeline supplies the body, contents, template CSS, and code highlighting. Local CSS, images, and fonts are embedded as data URLs. Font faces are retained when their Unicode ranges cover ASCII, generated CSS, or document characters. Characters added at runtime may fall back to system fonts if their face was omitted. Remote URLs are preserved without downloading or embedding, so documents using them still require a connection. Local scripts are embedded, but relative imports or fetch calls inside those scripts are not rewritten.
+
+HTML uses normal scrolling. It does not reproduce PDF pagination, running headers, page numbers, or Vivliostyle-specific layout. Template headings, colors, tables, and other styles remain, with screen-only body width and padding. Quizzes using `details` / `summary` remain interactive. Input HTML and scripts retain the same trusted-document assumption as PDF input.
+
+All local references are embedded before the output is replaced through a temporary file. Failures preserve existing output. Fonts and images can make the file large; check the attachment destination's size limit. PDF browser and timeout settings are unused for HTML output.

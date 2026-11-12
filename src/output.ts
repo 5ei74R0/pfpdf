@@ -21,8 +21,8 @@ export interface CommitOptions {
 }
 
 export function validateOutputPath(outputAbs: string, inputAbs: string): void {
-  if (!/\.pdf$/i.test(outputAbs)) {
-    throw new InputError(`output must have a .pdf extension: ${outputAbs}`);
+  if (!/\.(?:pdf|html?)$/i.test(outputAbs)) {
+    throw new InputError(`output must have a .pdf, .html, or .htm extension: ${outputAbs}`);
   }
   let inputReal: string | null = null;
   try {

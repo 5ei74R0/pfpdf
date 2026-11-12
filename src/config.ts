@@ -376,7 +376,7 @@ export const HELP_TEXT = `Usage: pfpdf --input INPUT --output OUTPUT [OPTIONS]
 
 Required:
   --input PATH       Markdown file or a directory containing Markdown files
-  --output PATH      destination .pdf path
+  --output PATH      destination .pdf, .html, or .htm path
 
 Options:
   --title TEXT             set the title, overriding front matter and inference

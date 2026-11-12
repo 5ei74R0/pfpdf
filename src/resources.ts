@@ -349,6 +349,26 @@ function rewriteCssSource(
   return out + src.slice(offset);
 }
 
+/** Map URL tokens without reinterpreting strings, comments, or CSS escapes. */
+export function mapCssUrls(css: string, mapUrl: (url: string) => string): string {
+  const tokens = tokenize({ css });
+  let result = '';
+  let offset = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    const parsed = parseUrlToken(tokens, i);
+    if (!parsed) continue;
+    const start = tokens[i]![2];
+    const end = tokens[parsed.endToken]![3] + 1;
+    const mapped = mapUrl(parsed.target);
+    if (mapped !== parsed.target) {
+      result += css.slice(offset, start) + `url(${JSON.stringify(mapped)})`;
+      offset = end;
+    }
+    i = parsed.endToken;
+  }
+  return result + css.slice(offset);
+}
+
 interface CssReplacement { start: number; end: number; text: string }
 
 interface ParsedUrl { target: string; endToken: number }
@@ -487,6 +507,7 @@ export function rewriteSrcset(
   baseDir: string,
   manifest: ResourceManifest,
   source = 'srcset URL',
+  mapUrl?: (url: string) => string,
 ): string {
   const candidates: string[] = [];
   let cursor = 0;
@@ -506,8 +527,8 @@ export function rewriteSrcset(
     while (cursor < srcset.length && srcset[cursor] !== ',') cursor++;
     const descriptor = srcset.slice(descriptorStart, cursor).trim();
     if (cursor < srcset.length) cursor++;
-    const resolved = resolveFetchUrl(url, baseDir, source);
-    const rewritten = resolved.kind === 'local'
+    const resolved = mapUrl ? { kind: 'none' as const } : resolveFetchUrl(url, baseDir, source);
+    const rewritten = mapUrl ? mapUrl(url) : resolved.kind === 'local'
       ? manifest.add(resolved.absPath) + resolved.suffix
       : url;
     candidates.push(descriptor === '' ? rewritten : `${rewritten} ${descriptor}`);

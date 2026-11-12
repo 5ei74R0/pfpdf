@@ -18,6 +18,7 @@ import { Workspace } from './workspace.js';
 import { renderDocument } from './renderer.js';
 import { validateOutputPath, ensureOutputParent, commitOutput } from './output.js';
 import { RepositoryResolver } from './repository.js';
+import { standaloneHtml, commitHtml } from './html-output.js';
 
 export interface Logger {
   warn: (msg: string) => void;
@@ -111,6 +112,7 @@ async function prepareDocument(
     lang: input.metadata.lang,
   });
   const document = buildDocumentHtml({
+    readiness: !/\.html?$/i.test(config.outputAbs ?? ''),
     metadata: input.metadata,
     body,
     template,
@@ -184,6 +186,16 @@ export async function runBuild(
     });
 
     ensureOutputParent(config.outputAbs!);
+
+    if (/\.html?$/i.test(config.outputAbs!)) {
+      const document = standaloneHtml(html, manifest, generated);
+      const size = commitHtml(config.outputAbs!, document, () => {
+        if (!config.keepWorkDir.value && !workspace.cleanup(false, log.warn)) {
+          throw new RuntimeError('cannot remove the temporary workspace before HTML output commit');
+        }
+      });
+      return { outputPath: config.outputAbs!, byteSize: size, elapsedMs: Date.now() - started };
+    }
 
     workspace.writeFile('document.html', html);
     workspace.writeFile('manifest.json', JSON.stringify(manifest.toJSON(), null, 2));

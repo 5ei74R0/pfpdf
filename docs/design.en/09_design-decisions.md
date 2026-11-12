@@ -653,3 +653,13 @@ Each decision follows this format:
 - Verification: Resolve dependencies through their actual parents and check directory reads stop after cancellation, bounded preprocessing, Windows paths, workspace exclusions, ignore reinclusion, archive glob / ZIP, cache verification / removal, and ShellJS executable lookup. Validate normal unit / lint checks, all four documentation PDFs, PDF smoke tests, and packed dependency reproduction, recording other OS results separately through CI
 - Distribution check caveat: Direct local `.tgz` installation in npm 10.9.0 / 11.17.0 ignores shrinkwrap, a known upstream limitation. A local registry with the same `_hasShrinkwrap` metadata as the public registry reproduces the pinned tree. Verify this without publishing or deploying, and also follow the existing release procedure: `npm ci --omit=dev`, `npm ls`, lock comparison, and PDF smoke from the extracted package root. `npm ls` from a consuming project can report overrides beyond parent ranges as invalid; distinguish this diagnostic from checking exact versions and integrity
 - Reconsideration conditions: Parents officially adopt patched versions, allowing overrides to be removed. Reevaluate when new advisories or pattern compatibility problems appear
+
+
+## DD-58: Attachable standalone HTML output
+
+- Status: adopted (2026-11-12).
+- Goal: share Report & Quiz as directly openable HTML using the same templates and Markdown pipeline as PDF.
+- Decision: branch after shared document preparation for `.html` / `.htm` output, embedding local CSS, images, and needed font faces as data URLs. Reuse the CSS URL parser and srcset processing without new dependencies or browser steps. Do not inject PDF readiness callbacks into HTML.
+- Rejected: distributing a debug workspace depends on a temporary server and absolute paths. Multiple HTML/assets files are inconvenient for PR attachments. Adding a pagination engine is unnecessary for scrolling reports.
+- Contract: preserve existing PDF generation. Commit output atomically and preserve previous output on failure. Do not recursively collect remote resources or dependencies inside scripts; document browser-versus-PDF pagination differences. Select font faces by static document characters; dynamic text may fall back to system fonts.
+- Validation: cover CSS, fonts, images, srcset, collapsible quizzes, browser-free generation, and existing-output preservation. Run normal tests, lint, and PDF regression checks.

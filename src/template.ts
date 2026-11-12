@@ -242,6 +242,8 @@ function tocContinuationReset(): Element {
 }
 
 export interface BuildOptions {
+  /** Disable renderer-only callbacks for portable HTML output. */
+  readiness?: boolean;
   metadata: Metadata;
   body: DocumentBody;
   template: PreparedTemplate;
@@ -420,7 +422,7 @@ export function buildDocumentHtml(opts: BuildOptions): { html: string; generated
   generatedCss.push(['generated/page.css', pageCss]);
 
   const headExtra: ElementContent[] = [
-    el('script', {}, [text(readinessInitScript())]),
+    ...(opts.readiness === false ? [] : [el('script', {}, [text(readinessInitScript())])]),
     // oxlint-disable-next-line unicorn/text-encoding-identifier-case -- HTML requires the utf-8 label.
     el('meta', { charSet: 'utf-8' }, []),
     el('link', { rel: 'stylesheet', href: 'generated/fonts.css' }, []),
@@ -438,14 +440,16 @@ export function buildDocumentHtml(opts: BuildOptions): { html: string; generated
     ),
   ];
 
-  (htmlBody.children).push(
-    el('img', {
-      alt: '',
-      hidden: true,
-      'data-pfpdf-readiness-gate': '',
-    }, []),
-    el('script', {}, [text(readinessFinishScript())]),
-  );
+  if (opts.readiness !== false) {
+    (htmlBody.children).push(
+      el('img', {
+        alt: '',
+        hidden: true,
+        'data-pfpdf-readiness-gate': '',
+      }, []),
+      el('script', {}, [text(readinessFinishScript())]),
+    );
+  }
 
   // Remove slot attributes from the final document.
   visit(root, 'element', (e: Element) => {
